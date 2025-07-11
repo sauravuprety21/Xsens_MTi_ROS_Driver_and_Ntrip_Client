@@ -43,6 +43,11 @@ XdaCallback::XdaCallback(rclcpp::Node::SharedPtr node, size_t maxBufferSize)
 	parent_node->declare_parameter<int>("time_option", 0);
 	parent_node->get_parameter("time_option", time_option);
 	m_timeHandler.setTimeOption(time_option);
+
+	int pub_queue_size = 5;
+	parent_node->get_parameter("publisher_queue_size", pub_queue_size);
+	m_hostTime_pub_ = parent_node->create_publisher<sensor_msgs::msg::TimeReference>("~/imu/hosttime", pub_queue_size);
+
 	//if else to check time_option rosinfo to print time_option
 	if (time_option == 0)
 	{
@@ -84,6 +89,8 @@ RosXsDataPacket XdaCallback::next(const std::chrono::milliseconds &timeout)
 void XdaCallback::onLiveDataAvailable(XsDevice *, const XsDataPacket *packet)
 {
 	std::unique_lock<std::mutex> lock(m_mutex);
+	rclcpp::Time hostTime = rclcpp::Clock().now();
+
 
 	assert(packet != 0);
 
@@ -92,10 +99,16 @@ void XdaCallback::onLiveDataAvailable(XsDevice *, const XsDataPacket *packet)
 	{
 		m_buffer.pop_front();
 	}
-
 	rclcpp::Time now = m_timeHandler.convertUtcTimeToRosTime(*packet);
 	// Push new packet
 	m_buffer.push_back(RosXsDataPacket(now, *packet));
+
+	if (packet->containsUtcTime()){
+		sensor_msgs::msg::TimeReference msg;
+		msg.header.stamp = now;
+		msg.time_ref =  hostTime;
+		m_hostTime_pub_->publish(msg);
+	}
 
 	// Manual unlocking is done before notifying, to avoid waking up
 	// the waiting thread only to block again

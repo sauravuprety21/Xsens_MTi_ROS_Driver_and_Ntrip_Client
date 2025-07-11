@@ -39,6 +39,7 @@
 #include <condition_variable>
 #include <list>
 #include "xsens_time_handler.h"
+#include <sensor_msgs/msg/time_reference.hpp>
 
 struct XsDataPacket;
 struct XsDevice;
@@ -65,6 +66,8 @@ private:
 	rclcpp::Node::SharedPtr parent_node;
 
 	XsensTimeHandler m_timeHandler;
+	rclcpp::Publisher<sensor_msgs::msg::TimeReference>::SharedPtr m_hostTime_pub_;
+
 };
 
 #endif
