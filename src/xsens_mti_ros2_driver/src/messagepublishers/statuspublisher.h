@@ -39,6 +39,7 @@ struct StatusPublisher : public PacketCallback
 {
     rclcpp::Publisher<xsens_mti_ros2_driver::msg::XsStatusWord>::SharedPtr pub;
     rclcpp::Publisher<sensor_msgs::msg::TimeReference>::SharedPtr pub_syncout;
+    rclcpp::Publisher<sensor_msgs::msg::TimeReference>::SharedPtr pub_syncin;
 
     // std::string frame_id = DEFAULT_FRAME_ID;
 
@@ -51,6 +52,7 @@ struct StatusPublisher : public PacketCallback
 
         pub = node->create_publisher<xsens_mti_ros2_driver::msg::XsStatusWord>("~/status", pub_queue_size);
         pub_syncout = node->create_publisher<sensor_msgs::msg::TimeReference>("~/sync_out", pub_queue_size);
+        pub_syncin = node->create_publisher<sensor_msgs::msg::TimeReference>("~/sync_in", pub_queue_size);
     }
 
     void parseToMessage(xsens_mti_ros2_driver::msg::XsStatusWord &msg, uint32_t status)
@@ -139,6 +141,15 @@ struct StatusPublisher : public PacketCallback
                 msgTimeRef.header.stamp = timestamp;
                 pub_syncout->publish(msgTimeRef);
             }
+
+            static uint32_t posSyncIn = 21;
+            if (statusContainsMarker(status, posSyncIn))
+            {
+                sensor_msgs::msg::TimeReference msgTimeRef;
+                msgTimeRef.header.stamp = timestamp;
+                pub_syncin->publish(msgTimeRef);
+            }
+
             pub->publish(msgStatus);
         }
     }
