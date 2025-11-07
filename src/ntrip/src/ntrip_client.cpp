@@ -33,7 +33,6 @@ namespace ntrip_client
 
     DeclareParameters();
     Initialize();
-
   }
 
   NtripClient::~NtripClient() { Stop(); }
@@ -121,8 +120,6 @@ namespace ntrip_client
       {
         return false;
       }
-
-
 
       // Initialize message counter
       nmea_msg_counter_ = 0;
@@ -388,8 +385,8 @@ namespace ntrip_client
       {
         std::string nmea_msg = msg->sentence + "\r\n";
 
-        RCLCPP_INFO(this->get_logger(), "Sending GGA message: %s",
-                    msg->sentence.c_str());
+        RCLCPP_DEBUG(this->get_logger(), "Sending GGA message: %s",
+                     msg->sentence.c_str());
 
         boost::system::error_code error;
         boost::asio::write(socket_, boost::asio::buffer(nmea_msg), error);
@@ -461,16 +458,16 @@ namespace ntrip_client
 
   std::string NtripClient::CreateAuthHeader() const
   {
-  
-      std::string auth_string = username_ + ":" + password_;
-      std::string encoded;
-      
-      encoded.resize(boost::beast::detail::base64::encoded_size(auth_string.size()));
-      int len = boost::beast::detail::base64::encode(&encoded[0], auth_string.data(), auth_string.size());
-      
-      encoded.resize(len);
-      
-      return encoded;
+
+    std::string auth_string = username_ + ":" + password_;
+    std::string encoded;
+
+    encoded.resize(boost::beast::detail::base64::encoded_size(auth_string.size()));
+    int len = boost::beast::detail::base64::encode(&encoded[0], auth_string.data(), auth_string.size());
+
+    encoded.resize(len);
+
+    return encoded;
   }
 
   void NtripClient::HandleError(const std::string &error_msg, bool fatal)
